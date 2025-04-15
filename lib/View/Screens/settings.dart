@@ -32,13 +32,11 @@ class QuizSettingsScreen extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   SizedBox(height: 16),
-                  buildToggleOption('Type', ['Questions', 'Quiz']),
+                  // buildToggleOption('Type', ['Questions', 'Quiz']),
                   buildToggleOption('Question Type', ['MCQ', 'T/F']),
                   buildToggleOption('From', ['Context', 'Topic']),
-                  buildTextOption('Language', 'Auto'),
-                  buildOptionsSelector('No. of Options', ['A', 'B', 'C', 'D']),
-                  buildOptionsSelector(
-                      'Difficulty', ['Easy', 'Medium', 'Hard']),
+                  // buildOptionsSelector('No. of Options', ['A', 'B', 'C', 'D']),
+                  buildOptionsSelector('Difficulty', ['Easy', 'Medium', 'Hard']),
                 ],
               ),
             ),

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:test_generator/Auth/auth.dart';
 import 'package:test_generator/View/Screens/customize_quiz.dart';
+import 'package:test_generator/View/Screens/loading_screen.dart';
 import 'package:test_generator/View/Screens/settings.dart';
 import 'package:test_generator/View/Screens/user_profile.dart';
 import 'package:test_generator/View/Screens/history_screen.dart';
 import 'package:test_generator/main.dart';
+import 'package:test_generator/Services/user_service.dart';
+import 'package:test_generator/services/auth_service.dart'; // Import UserService
+import 'package:test_generator/services/quiz_generator_service.dart';
+import 'package:test_generator/services/quiz_upload_service.dart'; // Import QuizGeneratorService
 
 void main() {
   runApp(MyApp());
@@ -18,8 +23,75 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final UserService _userService = UserService(); // Add UserService instance
+  final AuthService _authService = AuthService(); // Add AuthService instance
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController controller =
+      TextEditingController(); // Add controller
+
+  String? userName;
+  String? profilePic;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserInfo(); // Fetch user info on initialization
+  }
+
+  void fetchUserInfo() async {
+    Map<String, dynamic>? userData = await _userService.getUserDetails();
+
+    if (userData != null) {
+      setState(() {
+        userName = userData['name'];
+        profilePic = userData['profile_pic'];
+      });
+    } else {
+      print("No user data found.");
+    }
+  }
+
+  void fetchQuiz() async {
+    print("Fetching quiz..."); // Debugging line
+    final userInput = controller.text.trim(); // Get user input
+    if (userInput.isEmpty) {
+      print("❌ Please enter a topic.");
+      return;
+    }
+
+    final prompt = """
+Generate a JSON array of 10 multiple-choice questions on $userInput. Each object in the array must follow this exact format:
+
+{
+  "question": "What does HTML stand for?",
+  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+  "correctIndex": 0
+}
+Correct index can go from 0 to 3. The question should be related to the topic and the options should be plausible answers. The correct answer should be one of the options.
+Only return the JSON array. No numbering. No explanation. No additional text or formatting.
+""";
+
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => LoadingScreen(
+        uploadQuizTask: () async {
+          final quiz = await QuizGeneratorService.generateQuiz(prompt);
+          print("Quiz generated: $quiz"); // Debugging line
+          if (quiz.isNotEmpty) { 
+            final quizId = await FirebaseQuizService.uploadQuiz(quiz);
+            print("✅ Uploaded quiz with ID: $quizId");
+            return quizId!;
+          } else {
+            throw Exception("❌ Failed to generate quiz");
+          }
+        },
+      ),
+    ),
+  );
+    
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -56,17 +128,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController controller = TextEditingController();
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          "Welcome Dev !",
-          style: TextStyle(
+        title: Text(
+          "Welcome ${userName ?? ''}!",
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -75,10 +145,12 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           GestureDetector(
             onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
               child: CircleAvatar(
-                backgroundImage: AssetImage('assets/profile.jpg'),
+                backgroundImage: profilePic != null
+                    ? NetworkImage(profilePic!)
+                    : const AssetImage('assets/profile.jpg') as ImageProvider,
                 radius: 20,
               ),
             ),
@@ -96,14 +168,17 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircleAvatar(
-                    backgroundImage: AssetImage('assets/profile.jpg'),
+                  CircleAvatar(
+                    backgroundImage: profilePic != null
+                        ? NetworkImage(profilePic!)
+                        : const AssetImage('assets/profile.jpg')
+                            as ImageProvider,
                     radius: 45,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Dev',
-                    style: TextStyle(
+                  Text(
+                    userName ?? 'Dev',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -152,6 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
               onTap: () {
                 // Add logout functionality here
+                _authService.signOut().then((_) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                });
+
                 Navigator.pop(context);
               },
             ),
@@ -175,9 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: controller,
+                controller: controller, // Use the controller
                 decoration: InputDecoration(
-                  hintText: "Message...",
+                  hintText: "Enter a topic...",
                   hintStyle: const TextStyle(color: Colors.grey),
                   filled: true,
                   fillColor: Colors.grey[200],
@@ -188,12 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.send, color: Colors.black),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LoadingScreen(),
-                        ),
-                      );
+                      fetchQuiz(); // Call fetchQuiz when the send button is pressed
                     },
                   ),
                 ),

@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:test_generator/View/Screens/quiz_review_screen.dart';
+import 'package:test_generator/services/quizScreenService.dart';
+
+
 
 class QuizResult extends StatelessWidget {
   final int score;
   final int total;
+  final String quizId;
   final List<int> userAnswers;
+    final QuizScreenService _quizScreenService = QuizScreenService();
 
-  const QuizResult({
+
+
+   QuizResult({
     super.key,
     required this.score,
     required this.total,
-    required this.userAnswers,
+    required this.userAnswers, required this.quizId,
   });
+
+
+
+  
 
   String _getResultMessage() {
     double percentage = (score / total) * 100;
@@ -41,11 +52,15 @@ class QuizResult extends StatelessWidget {
   }
 
   Future<List<Map<String, dynamic>>> _loadQuizData(BuildContext context) async {
-    String jsonString =
-        await DefaultAssetBundle.of(context).loadString('lib/Data/quiz.json');
-    List<dynamic> jsonData = json.decode(jsonString);
-    return List<Map<String, dynamic>>.from(jsonData);
+    // String jsonString =
+      final loadedQuestions =
+        await _quizScreenService.fetchQuizQuestions(quizId);
+    // List<dynamic> jsonData = json.decode(jsonString);
+    return loadedQuestions;
   }
+
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +123,7 @@ class QuizResult extends StatelessWidget {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    final quizData = await _loadQuizData(context);
+                                          final quizData = await _loadQuizData(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(

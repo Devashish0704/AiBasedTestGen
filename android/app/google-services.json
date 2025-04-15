@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "729200849890",
+    "project_id": "quizzly-firebase-ai-app",
+    "storage_bucket": "quizzly-firebase-ai-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729200849890:android:37f7ea6ffbb30c1fe87fbb",
+        "android_client_info": {
+          "package_name": "com.example.test_generator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729200849890-oo09rjaovcdk3n397ngka1qer0jn62id.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.test_generator",
+            "certificate_hash": "400b2f61897209457e6eff3ae057131d6199e4f5"
+          }
+        },
+        {
+          "client_id": "729200849890-b1emfuuie32oju83ue3t0kvti83ea542.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhA5DOmerqA6bwd1AMFj0F82BbyMl7VRQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729200849890-b1emfuuie32oju83ue3t0kvti83ea542.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "729200849890-6tgbfele7qntfqkio0euaedekside76d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.testGenerator"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

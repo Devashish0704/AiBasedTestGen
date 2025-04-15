@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:test_generator/homeScreen.dart';
+import 'package:test_generator/services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
-
+   LoginScreen({super.key});
+  final AuthService _authService = AuthService();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,30 +74,30 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             OutlinedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
+              onPressed: 
+              () async {
+            final user = await _authService.signInWithGoogle();
+            if (user != null) {
+              print("User Signed In: ${user.displayName}");
+              // Navigate to home screen
+              Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => HomeScreen()),
                 );
-              },
+            } else {
+              print("Sign-In Failed");
+            }
+          },
+             
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              // child: const Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     // Icon(Icons.g_, color: Colors.black),
+              
 
-              //     SizedBox(width: 10),
-              //     Text("Continue with Google",
-              //         style: TextStyle(color: Colors.black)),
-              //   ],
-              // ),
-
-              child: Container(
+              child: SizedBox(
                 width: 300,
                 height: 23,
                 child: Row(
@@ -107,7 +108,7 @@ class LoginScreen extends StatelessWidget {
 
                         // decoration: BoxDecoration(color: Colors.blue),
                         child: Image.network(
-                            'http://pngimg.com/uploads/google/google_PNG19635.png',
+                            "http://pngimg.com/uploads/google/google_PNG19635.png",
                             fit: BoxFit.cover)),
                     SizedBox(
                       width: 5.0,
@@ -128,6 +129,7 @@ class LoginScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => HomeScreen()),
                 );
               },
+
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
