@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:test_generator/Data/quiz_settings.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
 
   /// 🔹 Fetch user details by user ID
   Future<Map<String, dynamic>?> getUserDetails() async {
@@ -17,8 +17,7 @@ class UserService {
           await _firestore.collection('users').doc(userId).get();
 
       if (userDoc.exists) {
-        // userData = userDoc.data() as Map<String, dynamic>;
-        // print("User data fetched: $userData");
+        print("User data fetched: ${userDoc.data()}");
         return userDoc.data() as Map<String, dynamic>;
       } else {
         print('User document does not exist.');

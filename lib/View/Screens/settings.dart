@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
+import 'package:provider/provider.dart';
+import 'package:test_generator/Data/quiz_settings.dart';
+import 'package:test_generator/providers/quiz_settings_provider.dart';
 
-class QuizSettingsScreen extends StatelessWidget {
+class QuizSettingsScreen extends StatefulWidget {
+  @override
+  _QuizSettingsScreenState createState() => _QuizSettingsScreenState();
+}
+
+class _QuizSettingsScreenState extends State<QuizSettingsScreen> {
   @override
   Widget build(BuildContext context) {
+    // Access the provider
+    final settingsProvider = Provider.of<QuizSettingsProvider>(context);
+    final settings = settingsProvider.settings;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85, // 80% of screen height
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
       ),
       child: Column(
         children: [
-          // Add drag indicator
           Container(
             margin: EdgeInsets.symmetric(vertical: 12),
             width: 40,
@@ -32,11 +43,39 @@ class QuizSettingsScreen extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   SizedBox(height: 16),
-                  // buildToggleOption('Type', ['Questions', 'Quiz']),
-                  buildToggleOption('Question Type', ['MCQ', 'T/F']),
-                  buildToggleOption('From', ['Context', 'Topic']),
-                  // buildOptionsSelector('No. of Options', ['A', 'B', 'C', 'D']),
-                  buildOptionsSelector('Difficulty', ['Easy', 'Medium', 'Hard']),
+                  buildToggleOption(
+                    'Question Type',
+                    ['MCQ', 'T/F'],
+                    settings.questionType == 'MCQ' ? 0 : 1,
+                    (index) {
+                      if (index != null) {
+                        settingsProvider
+                            .updateQuestionType(index == 0 ? 'MCQ' : 'T/F');
+                      }
+                    },
+                  ),
+                  buildToggleOption(
+                    'From',
+                    ['Context', 'Topic'],
+                    settings.from == 'Context' ? 0 : 1,
+                    (index) {
+                      if (index != null) {
+                        settingsProvider
+                            .updateFrom(index == 0 ? 'Context' : 'Topic');
+                      }
+                    },
+                  ),
+                  buildOptionsSelector(
+                    'Difficulty',
+                    ['Easy', 'Medium', 'Hard'],
+                    ['Easy', 'Medium', 'Hard'].indexOf(settings.difficulty),
+                    (index) {
+                      if (index != null) {
+                        settingsProvider.updateDifficulty(
+                            ['Easy', 'Medium', 'Hard'][index]);
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -46,7 +85,8 @@ class QuizSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget buildToggleOption(String title, List<String> options) {
+  Widget buildToggleOption(String title, List<String> options, int initialIndex,
+      void Function(int?) onToggle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -65,13 +105,11 @@ class QuizSettingsScreen extends StatelessWidget {
             activeFgColor: Colors.white,
             inactiveBgColor: Colors.grey[200]!,
             inactiveFgColor: Colors.grey[800]!,
-            initialLabelIndex: 0,
+            initialLabelIndex: initialIndex,
             totalSwitches: 2,
             labels: options,
             radiusStyle: true,
-            onToggle: (index) {
-              print('switched to: $index');
-            },
+            onToggle: onToggle,
           ),
         ),
         SizedBox(height: 24),
@@ -79,33 +117,8 @@ class QuizSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget buildTextOption(String title, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        SizedBox(height: 8),
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              color: Colors.grey[800],
-              fontSize: 16,
-            ),
-          ),
-        ),
-        SizedBox(height: 24),
-      ],
-    );
-  }
-
-  Widget buildOptionsSelector(String title, List<String> options) {
+  Widget buildOptionsSelector(String title, List<String> options,
+      int initialIndex, void Function(int?) onToggle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -124,13 +137,11 @@ class QuizSettingsScreen extends StatelessWidget {
             activeFgColor: Colors.white,
             inactiveBgColor: Colors.grey[200]!,
             inactiveFgColor: Colors.grey[800]!,
-            initialLabelIndex: 0,
+            initialLabelIndex: initialIndex,
             totalSwitches: options.length,
             labels: options,
             radiusStyle: true,
-            onToggle: (index) {
-              print('switched to: $index');
-            },
+            onToggle: onToggle,
           ),
         ),
         SizedBox(height: 24),

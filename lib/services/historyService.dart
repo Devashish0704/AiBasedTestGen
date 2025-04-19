@@ -29,8 +29,7 @@ class HistoryService {
         final iconName = quizData['quiz_icon'] ?? 'Icons.help';
         final icon = _getIconFromString(iconName);
 
-
-        // Fetch user answers
+       // Fetch user answers
         final answersSnapshot = await _firestore
             .collection('user_answers')
             .doc(userId)
@@ -70,18 +69,32 @@ class HistoryService {
     return historyData;
   }
 
-  IconData _getIconFromString(String iconName) {
-    switch (iconName) {
-      case 'Icons.code':
-        return Icons.code;
-      case 'Icons.storage':
-        return Icons.storage;
-      case 'Icons.web':
-        return Icons.web;
-      case 'Icons.design_services':
-        return Icons.design_services;
-      default:
-        return Icons.help_outline;
-    }
+ IconData _getIconFromString(String iconName) {
+  switch (iconName) {
+    case 'code':
+      return Icons.code;
+    case 'storage':
+      return Icons.storage;
+    case 'web':
+      return Icons.web;
+    case 'design_services':
+      return Icons.design_services;
+    case 'school':
+      return Icons.school;
+    case 'science':
+      return Icons.science;
+    case 'sports_esports':
+      return Icons.sports_esports;
+    case 'book':
+      return Icons.book;
+    case 'computer':
+      return Icons.computer;
+    case 'lightbulb':
+      return Icons.lightbulb;
+    default:
+      return Icons.storage;
   }
 }
+
+  }
+

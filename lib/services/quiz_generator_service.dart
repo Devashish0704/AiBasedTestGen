@@ -3,10 +3,12 @@ import 'package:http/http.dart' as http;
 
 class QuizGeneratorService {
   static const String apiUrl =
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2";
-  static const String apiKey = ;
+      "https://api.groq.com/openai/v1/chat/completions";
+  static const String apiKey =
+      "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";
+  static const String model = "llama-3.1-8b-instant";
 
-  static Future<List<Map<String, dynamic>>> generateQuiz(String prompt) async {
+  static Future<String> generateQuiz(String prompt) async {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -15,50 +17,53 @@ class QuizGeneratorService {
           "Content-Type": "application/json",
         },
         body: jsonEncode({
-          "inputs": prompt,
-          "parameters": {
-            "max_new_tokens": 2048,
-            "temperature": 0.7,
-          }
+          "model": model,
+          "messages": [
+            {
+              "role": "system",
+              "content":
+                  "You are an assistant that generates high-quality multiple-choice questions."
+            },
+            {"role": "user", "content": prompt}
+          ],
+          "temperature": 0.5,
+          "top_p": 0.9,
+          "max_tokens": 1000,
+          "penalty": 1.1,
         }),
       );
 
       if (response.statusCode != 200) {
         print("❌ API Error: ${response.body}");
-        return [];
+        return "";
       }
 
-      final responseData = jsonDecode(response.body);
-      final generatedText = responseData[0]["generated_text"];
+      final rawContent =
+          jsonDecode(response.body)["choices"][0]["message"]["content"];
+      final cleanedContent =
+          rawContent.replaceAll(RegExp(r"```json|```"), "").trim();
 
-      final regex = RegExp(r'\[\s*{.*?}\s*\]', dotAll: true);
-      final match = regex.firstMatch(generatedText);
-
-      if (match != null) {
-        final jsonArrayString = match.group(0);
-        final quiz = jsonDecode(jsonArrayString!) as List;
-        return quiz.cast<Map<String, dynamic>>();
-      } else {
-        // Fallback: split into lines and parse one-by-one
-        final lines = generatedText.split('\n');
-        final List<Map<String, dynamic>> quiz = [];
-
-        for (var line in lines) {
-          line = line.trim();
-          if (line.startsWith('{') && line.endsWith('}')) {
-            try {
-              final item = jsonDecode(line);
-              if (item is Map<String, dynamic>) {
-                quiz.add(item);
-              }
-            } catch (_) {}
+      try {
+        final parsed = jsonDecode(cleanedContent);
+        if (parsed is Map<String, dynamic>) {
+          // Validate the quiz format
+          if (parsed.containsKey("questions") &&
+              parsed["questions"] is List &&
+              parsed.containsKey("topic") &&
+              parsed.containsKey("description") &&
+              parsed.containsKey("level")) {
+            return cleanedContent; // Return the cleaned JSON string
           }
         }
-        return quiz;
+        print("⚠️ Invalid quiz format");
+        return "";
+      } catch (e) {
+        print("❌ JSON Decode Error: $e");
+        return "";
       }
     } catch (e) {
       print("❌ Exception: $e");
-      return [];
+      return "";
     }
   }
 }

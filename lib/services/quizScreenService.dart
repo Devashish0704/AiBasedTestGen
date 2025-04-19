@@ -54,6 +54,7 @@ class QuizScreenService {
     required int score,
     required int total_questions,
     required String quizTitle,
+    required String quizIcon,
   }) async {
     final docRef = FirebaseFirestore.instance
         .collection('user_answers')
@@ -62,7 +63,7 @@ class QuizScreenService {
         .doc(quizId);
 
     await docRef.set({
-      'quiz_icon': "Icons.storage", // Dynamic in future through AI
+      'quiz_icon': quizIcon, 
       'quiz_title': quizTitle,
 
       'score': score,

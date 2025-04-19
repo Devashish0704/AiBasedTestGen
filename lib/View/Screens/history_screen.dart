@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:test_generator/Services/user_service.dart';
 import 'package:test_generator/View/Screens/quiz_review_screen.dart';
 import 'package:test_generator/services/historyService.dart';
 
@@ -11,9 +10,25 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final HistoryService _historyService = HistoryService();
-  final UserService _userService = UserService();
   List<Map<String, dynamic>> historyData = [];
   bool isLoading = true; // Track loading state
+
+  void _retakeQuiz(String topic, String currentDifficulty) {
+    // Navigate back to home and trigger quiz generation with same settings
+    Navigator.pop(context,
+        {'action': 'retake', 'topic': topic, 'difficulty': currentDifficulty});
+  }
+
+  void _takeHarderQuiz(String topic, String currentDifficulty) {
+    String newDifficulty = 'Hard';
+    if (currentDifficulty == 'Easy') {
+      newDifficulty = 'Medium';
+    }
+
+    // Navigate back to home and trigger quiz generation with higher difficulty
+    Navigator.pop(context,
+        {'action': 'upgrade', 'topic': topic, 'difficulty': newDifficulty});
+  }
 
   @override
   void initState() {
@@ -21,7 +36,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     String userId = FirebaseAuth.instance.currentUser!.uid;
     print(userId);
     _historyService.fetchUserHistory(userId).then((value) {
-      print(value);
       setState(() {
         historyData = value;
         isLoading = false; // Data loaded
@@ -35,6 +49,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   String _getGrade(int score, int total) {
+    if (total <= 0) return "N/A"; // Handle case where total is 0 or negative
     double percentage = (score / total) * 100;
     if (percentage >= 90) return "A";
     if (percentage >= 80) return "B";
@@ -53,6 +68,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return Colors.orange;
       case "D":
         return Colors.deepOrange;
+      case "N/A":
+        return Colors.grey;
       default:
         return Colors.red;
     }
@@ -176,7 +193,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      "${item["score"]}/${item["questions"]}",
+                                      item["questions"] > 0
+                                          ? "${item["score"]}/${item["questions"]}"
+                                          : "N/A",
                                       style: TextStyle(
                                         color: _getGradeColor(grade),
                                         fontWeight: FontWeight.bold,
@@ -187,10 +206,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                               SizedBox(height: 12),
                               LinearProgressIndicator(
-                                value: item["score"] / item["questions"],
+                                value: item["questions"] > 0
+                                    ? (item["score"] / item["questions"])
+                                        .clamp(0.0, 1.0)
+                                    : 0.0,
                                 backgroundColor: Colors.grey[200],
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                     _getGradeColor(grade)),
+                              ),
+                              SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (grade == "A")
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        final currentTitle = item["title"];
+                                        final currentDifficulty =
+                                            item["difficulty"];
+                                        _takeHarderQuiz(
+                                            currentTitle, currentDifficulty);
+                                      },
+                                      icon: Icon(Icons.trending_up,
+                                          color: Colors.white),
+                                      label: Text("Try Higher Difficulty",
+                                          style:
+                                              TextStyle(color: Colors.white)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        final currentTitle = item["title"];
+                                        final currentDifficulty =
+                                            item["difficulty"];
+                                        _retakeQuiz(
+                                            currentTitle, currentDifficulty);
+                                      },
+                                      icon: Icon(Icons.refresh,
+                                          color: Colors.white),
+                                      label: Text("Retake Quiz",
+                                          style:
+                                              TextStyle(color: Colors.white)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _getGradeColor(grade),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),

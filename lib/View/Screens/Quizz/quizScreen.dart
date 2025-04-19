@@ -25,6 +25,7 @@ class _QuizScreenState extends State<QuizScreen>
   late Animation<double> _fadeAnimation;
   List<Map<String, dynamic>> questions = [];
   String QuizName = "";
+  String QuizIcon = "";
   int get _totalQuestions => questions.length;
   bool _answered = false;
   int _score = 0;
@@ -75,7 +76,7 @@ class _QuizScreenState extends State<QuizScreen>
       userId: userId, // Replace with the actual userId from your auth/session
       quizId: widget.quizId,
       score: _score,
-      total_questions: _totalQuestions, quizTitle: QuizName,
+      total_questions: _totalQuestions, quizTitle: QuizName, quizIcon: QuizIcon,
     );
     print("✅ Quiz results uploaded.");
   }
@@ -94,6 +95,7 @@ class _QuizScreenState extends State<QuizScreen>
         await _quizScreenService.fetchQuizDetails(widget.quizId);
     setState(() {
       QuizName = quizDetails[0]['topic'];
+      QuizIcon = quizDetails[0]['quiz_icon'];
     });
   }
 
