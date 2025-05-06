@@ -1,0 +1,53 @@
+Analyze this Flutter codebase and identify all the parts where network operations or time-consuming tasks occur — such as:
+
+1. Fetching quiz history from Firestore (e.g., on history screen or profile).
+2. Uploading a full quiz at once after generation or completion.
+3. Any other long-running Firestore reads/writes.
+
+Goals:
+
+✅ Optimize app performance and perceived responsiveness by doing the following:
+
+---
+
+📦 1. **Cache quiz history locally**
+
+- Implement a caching mechanism (e.g., using Hive or SharedPreferences) to store the user’s quiz history locally.
+- On app start or when visiting the history screen, load history from cache instantly.
+- Only fetch history from Firestore when:
+  - The user uploads a new quiz
+  - Or manually refreshes
+- Update the local cache after fetching fresh history.
+
+---
+
+🧩 2. **Incremental quiz answer upload**
+
+- Instead of uploading the entire quiz response at once after completion, update Firestore **immediately after each question is answered**.
+- This reduces the final upload delay and makes resume-from-last-answer easier.
+- Use batch writes or set with merge if needed to avoid overwriting.
+
+---
+
+🚀 3. **Optimize full quiz upload**
+
+- If quiz generation takes time and returns 10+ questions, start uploading the generated quiz document and each question as soon as it's available, rather than waiting until all are prepared.
+- Add a loading indicator only where necessary.
+
+---
+
+🧼 4. **Clean up / debounce repeated Firestore calls**
+
+- Identify any duplicate or unnecessary Firestore reads.
+- Avoid redundant listeners or multiple calls to `.get()` on the same collection.
+- Debounce real-time streams if applicable.
+
+---
+
+🛠️ Implementation Notes:
+
+- Use BLoC to update state after caching or uploading.
+- Make sure local data is kept in sync with Firestore.
+- Prioritize responsiveness and reduce time-to-feedback for user actions.
+
+

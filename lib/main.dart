@@ -1,11 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:test_generator/providers/quiz_settings_provider.dart';
-import 'dart:async';
-
+import 'package:test_generator/homeScreen.dart';
 import 'package:test_generator/Auth/auth.dart';
 import 'package:test_generator/firebase_options.dart';
+import 'package:test_generator/services/local_cache_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,12 +17,8 @@ void main() async {
     print("Firebase Initialization Error: $e");
   }
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => QuizSettingsProvider(),
-      child: const MyApp(),
-    ),
-  );
+  // Initialize local cache
+  await LocalCacheService.init();
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +32,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.grey,
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: LoginScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/login': (context) => LoginScreen(),
+      },
     );
   }
 }
+
+// flutter run -d edge --web-port=8080

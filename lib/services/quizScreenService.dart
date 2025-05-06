@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class QuizScreenService {
-  /// Fetch quiz questions from Firestore
   Future<List<Map<String, dynamic>>> fetchQuizQuestions(String quizId) async {
     await Firebase.initializeApp();
 
@@ -18,7 +17,7 @@ class QuizScreenService {
         final correctIndex = options.indexOf(correctAnswer);
 
         return {
-          'id': doc.id, // ✅ Include question document ID
+          'id': doc.id,
           'question': data['question'],
           'options': options,
           'correctIndex': correctIndex,
@@ -31,17 +30,23 @@ class QuizScreenService {
   }
 
   Future<List<Map<String, dynamic>>> fetchQuizDetails(String quizId) async {
-    await Firebase.initializeApp();
-
     try {
       final quizRef =
           FirebaseFirestore.instance.collection('quizzes').doc(quizId);
-      final questionsSnapshot = await quizRef.get();
+      final quizSnapshot = await quizRef.get();
 
-      final quizData = questionsSnapshot.data() ?? {};
+      if (!quizSnapshot.exists) {
+        return [];
+      }
 
-      // Return the quiz data
-      return [quizData];
+      final quizData = quizSnapshot.data() ?? {};
+      return [
+        {
+          'topic': quizData['topic'] ?? 'General Quiz',
+          'quiz_icon': quizData['quiz_icon'] ?? 'book',
+          'difficulty': quizData['difficulty'] ?? 'medium'
+        }
+      ];
     } catch (e) {
       print('Error fetching quiz data: $e');
       return [];
@@ -55,6 +60,7 @@ class QuizScreenService {
     required int total_questions,
     required String quizTitle,
     required String quizIcon,
+    required String quizDifficulty,
   }) async {
     final docRef = FirebaseFirestore.instance
         .collection('user_answers')
@@ -63,9 +69,10 @@ class QuizScreenService {
         .doc(quizId);
 
     await docRef.set({
-      'quiz_icon': quizIcon, 
+      'quiz_id': quizId,
       'quiz_title': quizTitle,
-
+      'quiz_icon': quizIcon,
+      'difficulty': quizDifficulty,
       'score': score,
       'total_questions': total_questions,
       'accuracy': (score / total_questions) * 100,
@@ -77,7 +84,8 @@ class QuizScreenService {
     required String userId,
     required String quizId,
     required String questionId,
-    required int selectedAnswer,
+    required String selectedOption,
+    required String correctAnswer,
     required bool isCorrect,
     required String question,
   }) async {
@@ -91,7 +99,8 @@ class QuizScreenService {
 
     await docRef.set({
       'question': question,
-      'selected_answer': selectedAnswer,
+      'selected_option': selectedOption,
+      'correct_answer': correctAnswer,
       'is_correct': isCorrect,
       'answered_at': FieldValue.serverTimestamp(),
     });

@@ -1,14 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
+import 'package:test_generator/Data/quiz_history.dart';
+import 'package:test_generator/services/local_cache_service.dart';
+import 'package:rxdart/rxdart.dart';
 
 class HistoryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _historySubject = BehaviorSubject<List<QuizHistory>>();
+  Stream<List<QuizHistory>> get historyStream => _historySubject.stream;
+  bool _isInitialized = false;
 
-  Future<List<Map<String, dynamic>>> fetchUserHistory(String userId) async {
+  Future<List<QuizHistory>> fetchUserHistory(String userId,
+      {bool forceRefresh = false}) async {
+    // Return cached data if available and not forcing refresh
+    if (!forceRefresh && _isInitialized) {
+      final cachedHistory = LocalCacheService.getQuizHistory();
+      if (cachedHistory.isNotEmpty) {
+        return cachedHistory;
+      }
+    }
+
     await Firebase.initializeApp();
-    List<Map<String, dynamic>> historyData = [];
-
+    List<QuizHistory> historyData = [];
 
     try {
       final quizzesSnapshot = await _firestore
@@ -18,83 +31,46 @@ class HistoryService {
           .orderBy('created_at', descending: true)
           .get();
 
-      for (final quizDoc in quizzesSnapshot.docs) {
-        final quizId = quizDoc.id;
-        final quizData = quizDoc.data();
+      historyData = quizzesSnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['quiz_id'] = doc.id;
+        return QuizHistory.fromJson(data);
+      }).toList();
 
-        final score = quizData['score'] ?? 0;
-        final totalQuestions = quizData['total_questions'] ?? 0;
-        final title = quizData['quiz_title'] ?? 'Untitled Quiz';
-        final date = quizData['created_at']?.toDate()?.toString().split(' ')[0] ?? 'Unknown Date';
-        final iconName = quizData['quiz_icon'] ?? 'Icons.help';
-        final icon = _getIconFromString(iconName);
+      // Cache the fetched data
+      await LocalCacheService.cacheQuizHistory(historyData);
+      _isInitialized = true;
+      _historySubject.add(historyData);
 
-       // Fetch user answers
-        final answersSnapshot = await _firestore
-            .collection('user_answers')
-            .doc(userId)
-            .collection('quizzes')
-            .doc(quizId)
-            .collection('answers')
-            .get();
-
-        final List<int> userAnswers = [];
-        final List<Map<String, dynamic>> questionsData = [];
-
-        for (final answerDoc in answersSnapshot.docs) {
-          final answerData = answerDoc.data();
-          userAnswers.add(answerData['selected_answer'] ?? -1);
-          questionsData.add({
-            'question': answerData['question'] ?? '',
-            'is_correct': answerData['is_correct'] ?? false,
-            'selected_answer': answerData['selected_answer'],
-            'answered_at': answerData['answered_at'],
-          });
-        }
-
-        historyData.add({
-          'title': title,
-          'questions': totalQuestions,
-          'score': score,
-          'icon': icon,
-          'date': date,
-          'userAnswers': userAnswers,
-          'questions_data': questionsData,
-        });
-      }
+      return historyData;
     } catch (e) {
-      print('❌ Error fetching history for userId: $userId - $e');
+      print('Error fetching history: $e');
+      // Return cached data if available when fetch fails
+      final cachedHistory = LocalCacheService.getQuizHistory();
+      return cachedHistory;
     }
-
-    return historyData;
   }
 
- IconData _getIconFromString(String iconName) {
-  switch (iconName) {
-    case 'code':
-      return Icons.code;
-    case 'storage':
-      return Icons.storage;
-    case 'web':
-      return Icons.web;
-    case 'design_services':
-      return Icons.design_services;
-    case 'school':
-      return Icons.school;
-    case 'science':
-      return Icons.science;
-    case 'sports_esports':
-      return Icons.sports_esports;
-    case 'book':
-      return Icons.book;
-    case 'computer':
-      return Icons.computer;
-    case 'lightbulb':
-      return Icons.lightbulb;
-    default:
-      return Icons.storage;
+  Future<List<Map<String, dynamic>>> fetchQuizAnswers(
+      String userId, String quizId) async {
+    try {
+      final answersSnapshot = await _firestore
+          .collection('user_answers')
+          .doc(userId)
+          .collection('quizzes')
+          .doc(quizId)
+          .collection('answers')
+          .orderBy('answered_at', descending: false)
+          .get();
+
+      return answersSnapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      print('Error fetching quiz answers: $e');
+      return [];
+    }
+  }
+
+  void dispose() {
+    _historySubject.close();
   }
 }
-
-  }
-
