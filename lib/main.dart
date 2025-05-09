@@ -1,24 +1,25 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:test_generator/homeScreen.dart';
 import 'package:test_generator/Auth/auth.dart';
 import 'package:test_generator/firebase_options.dart';
 import 'package:test_generator/services/local_cache_service.dart';
+import 'package:test_generator/View/Screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform, // Use FirebaseOptions
+      options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
     print("Firebase Initialization Error: $e");
   }
 
-  // Initialize local cache
   await LocalCacheService.init();
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -32,13 +33,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.grey,
         scaffoldBackgroundColor: Colors.white,
       ),
-      initialRoute: '/login',
+      home: const SplashScreen(),
       routes: {
-        '/': (context) => const HomeScreen(),
         '/login': (context) => LoginScreen(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
 }
-
-// flutter run -d edge --web-port=8080

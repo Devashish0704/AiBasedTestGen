@@ -329,10 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.access_time),
                   label: 'History',
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings),
-                  label: 'Settings',
-                ),
+                // BottomNavigationBarItem(
+                //   icon: Icon(Icons.settings),
+                //   label: 'Settings',
+                // ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.person),
                   label: 'Profile',
